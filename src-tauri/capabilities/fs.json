@@ -1,0 +1,22 @@
+{
+  "$schema": "./default.json",
+  "identifier": "fs",
+  "description": "File system access capability",
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    {
+      "identifier": "fs:allow-read-text-file",
+      "allow": [{ "path": "$APPCONFIG/settings.json" }]
+    },
+    {
+      "identifier": "fs:allow-write-text-file",
+      "allow": [{ "path": "$APPCONFIG/settings.json" }]
+    },
+    {
+      "identifier": "fs:allow-exists",
+      "allow": [{ "path": "$APPCONFIG/settings.json" }]
+    }
+  ]
+}

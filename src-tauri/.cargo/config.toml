@@ -1,0 +1,2 @@
+[alias]
+tauri-dev = "watch -x 'build --lib' -w src"

@@ -42,6 +42,7 @@ Use these conventions to stay productive and consistent with the existing code.
 
 ## Conventions for New Code
 - **File placement**: Put new React route screens under `src/routes/` using TanStack file routing; put shared hooks/utils in `src/lib/`.
+- **Components**: Place reusable React components in `src/components/`. Organize by domain (e.g., `src/components/setup/`, `src/components/meeting/`). Do NOT create components inside `src/routes/`—that folder is strictly for file-based routing.
 - **TypeScript**: Use typed props/return values and avoid `any`. Follow the existing simple functional component style.
 - **Enums**: For any constant options (e.g., dropdown values, step indicators, status codes), use TypeScript enums and place them in `src/enums/`. Create a barrel export in `src/enums/index.ts`.
 - **Imports**: Prefer relative imports within `src/` (`../lib/utils`) rather than deep absolute paths, matching existing files.

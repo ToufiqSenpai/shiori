@@ -1,0 +1,5 @@
+# Folders to ignore for Tauri dev watcher
+models
+target
+icons
+gen
