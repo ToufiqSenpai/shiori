@@ -6,4 +6,4 @@ export enum HardwareAccelerator {
 export const HARDWARE_ACCELERATOR_LABELS: Record<HardwareAccelerator, string> = {
   [HardwareAccelerator.CPU]: 'CPU',
   [HardwareAccelerator.CUDA]: 'CUDA',
-};
+}

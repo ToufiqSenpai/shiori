@@ -1,15 +1,13 @@
-import { DownloadStatus } from "@/enums/download-status"
-import { invoke } from "@tauri-apps/api/core"
-import { listen, UnlistenFn } from "@tauri-apps/api/event"
+import { DownloadStatus } from '@/enums/download-status'
+import { invoke } from '@tauri-apps/api/core'
+import { listen, UnlistenFn } from '@tauri-apps/api/event'
 
 export function getDownloads(): Promise<FileDownload[]> {
-  return invoke("get_downloads")
+  return invoke('get_downloads')
 }
 
-export function onDownloadEvent(
-  callback: (data: DownloadEventData) => void
-): Promise<UnlistenFn> {
-  return listen<DownloadEventData>("download", (event) => {
+export function onDownloadEvent(callback: (data: DownloadEventData) => void): Promise<UnlistenFn> {
+  return listen<DownloadEventData>('download', event => {
     callback(event.payload)
   })
 }
@@ -27,10 +25,10 @@ export interface FileDownload {
 }
 
 export enum DownloadEvent {
-  ADDED = "added",
-  PROGRESS = "progress",
-  STATUS_CHANGED = "status-changed",
-  ERROR = "error",
+  ADDED = 'added',
+  PROGRESS = 'progress',
+  STATUS_CHANGED = 'status-changed',
+  ERROR = 'error',
 }
 
 export type DownloadEventData =

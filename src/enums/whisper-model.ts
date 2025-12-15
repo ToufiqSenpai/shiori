@@ -1,5 +1,5 @@
-import { getWhisperModels } from "../api/model";
-import prettyBytes from "pretty-bytes";
+import { getWhisperModels } from '../api/model'
+import prettyBytes from 'pretty-bytes'
 
 export enum WhisperModel {
   TINY = 'tiny',
@@ -10,18 +10,19 @@ export enum WhisperModel {
   LARGE_TURBO = 'large-turbo',
 }
 
-export const WHISPER_MODEL_INFO: Record<
-  WhisperModel,
-  { label: string; size: string; sizeBytes: number }
-> = (await getWhisperModels())
-.reduce((acc, model) => {
-  acc[model.model as WhisperModel] = {
-    label: model.model.charAt(0).toUpperCase() + model.model.slice(1).replace('-', ' '),
-    size: prettyBytes(model.size),
-    sizeBytes: model.size,
-  };
-  return acc;
-}, {} as Record<WhisperModel, { label: string; size: string; sizeBytes: number }>);
+export const WHISPER_MODEL_INFO: Record<WhisperModel, { label: string; size: string; sizeBytes: number }> = (
+  await getWhisperModels()
+).reduce(
+  (acc, model) => {
+    acc[model.model as WhisperModel] = {
+      label: model.model.charAt(0).toUpperCase() + model.model.slice(1).replace('-', ' '),
+      size: prettyBytes(model.size),
+      sizeBytes: model.size,
+    }
+    return acc
+  },
+  {} as Record<WhisperModel, { label: string; size: string; sizeBytes: number }>,
+)
 // > = {
 //   [WhisperModel.TINY]: {
 //     label: 'Tiny',

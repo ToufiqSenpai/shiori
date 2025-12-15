@@ -1,107 +1,102 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useDebounceValue } from 'usehooks-ts';
-import axios from 'axios';
-import { Search, Loader2, ExternalLink, Package } from 'lucide-react';
-import { Input } from '../ui/input';
-import { Button } from '../ui/button';
-import prettyBytes from 'pretty-bytes';
-import { useSetupStore } from '@/stores/setup-store';
+import { useState, useEffect, useCallback } from 'react'
+import { useDebounceValue } from 'usehooks-ts'
+import axios from 'axios'
+import { Search, Loader2, ExternalLink, Package } from 'lucide-react'
+import { Input } from '../ui/input'
+import { Button } from '../ui/button'
+import prettyBytes from 'pretty-bytes'
+import { useSetupStore } from '@/stores/setup-store'
 
 export interface HuggingFaceModel {
-  id: string;
-  author: string;
-  modelId: string;
-  downloads: number;
-  likes: number;
-  tags: string[];
+  id: string
+  author: string
+  modelId: string
+  downloads: number
+  likes: number
+  tags: string[]
 }
 
 interface LocalModelSearchProps {
-  value: string;
-  onChange: (modelId: string) => void;
+  value: string
+  onChange: (modelId: string) => void
 }
 
-export function LocalModelSearch({
-  value,
-  onChange,
-}: LocalModelSearchProps) {
-  const { setState, modelStepError } = useSetupStore()
-  const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedQuery] = useDebounceValue(searchQuery, 500);
-  const [models, setModels] = useState<HuggingFaceModel[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [showResults, setShowResults] = useState(false);
+export function LocalModelSearch({ value, onChange }: LocalModelSearchProps) {
+  const { setState } = useSetupStore()
+  const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedQuery] = useDebounceValue(searchQuery, 500)
+  const [models, setModels] = useState<HuggingFaceModel[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [showResults, setShowResults] = useState(false)
 
   // Search HuggingFace API for GGUF models
   const searchModels = useCallback(async (query: string) => {
     if (!query.trim()) {
-      setModels([]);
-      return;
-    }
-    
-    if (modelStepError) {
-      setState({ modelStepError: "" })
+      setModels([])
+      return
     }
 
-    setIsLoading(true);
-    setError(null);
+    if (modelStepError) {
+      setState({ modelStepError: '' })
+    }
+
+    setIsLoading(true)
+    setError(null)
 
     try {
       // Search for GGUF models on HuggingFace
-      const response = await axios.get('https://huggingface.co/api/models', {
-        params: {
-          search: query,
-          filter: 'gguf',
-          sort: 'downloads',
-          direction: -1,
-          limit: 10,
-        },
-      });
-
-      const formattedModels: HuggingFaceModel[] = response.data.map((model: any) => ({
-        id: model.id || model.modelId,
-        author: model.author || model.id?.split('/')[0] || 'Unknown',
-        modelId: model.modelId || model.id,
-        downloads: model.downloads || 0,
-        likes: model.likes || 0,
-        tags: model.tags || [],
-      }));
-
-      setModels(formattedModels);
+      // const response = await axios.get('https://huggingface.co/api/models', {
+      //   params: {
+      //     search: query,
+      //     filter: 'gguf',
+      //     sort: 'downloads',
+      //     direction: -1,
+      //     limit: 10,
+      //   },
+      // });
+      // const formattedModels: HuggingFaceModel[] = response.data.map((model: ) => ({
+      //   id: model.id || model.modelId,
+      //   author: model.author || model.id?.split('/')[0] || 'Unknown',
+      //   modelId: model.modelId || model.id,
+      //   downloads: model.downloads || 0,
+      //   likes: model.likes || 0,
+      //   tags: model.tags || [],
+      // }));
+      // setModels(formattedModels);
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || err.message || 'Search failed');
+        setError(err.response?.data?.message || err.message || 'Search failed')
       } else {
-        setError(err instanceof Error ? err.message : 'Search failed');
+        setError(err instanceof Error ? err.message : 'Search failed')
       }
-      setModels([]);
+      setModels([])
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  }, []);
+  }, [])
 
   // Search when debounced query changes
   useEffect(() => {
     if (debouncedQuery) {
-      searchModels(debouncedQuery);
+      searchModels(debouncedQuery)
     } else {
-      setModels([]);
+      setModels([])
     }
-  }, [debouncedQuery, searchModels]);
+  }, [debouncedQuery, searchModels])
 
   // Handle model selection
   const handleSelectModel = (model: HuggingFaceModel) => {
-    onChange(model.id);
-    setSearchQuery('');
-    setShowResults(false);
-  };
+    onChange(model.id)
+    setSearchQuery('')
+    setShowResults(false)
+  }
 
   // Handle clearing selection
   const handleClear = () => {
-    onChange('');
-    setSearchQuery('');
-  };
+    onChange('')
+    setSearchQuery('')
+  }
 
   return (
     <div className="space-y-2">
@@ -121,12 +116,7 @@ export function LocalModelSearch({
             >
               <ExternalLink className="h-4 w-4" />
             </a>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={handleClear}
-            >
+            <Button type="button" variant="ghost" size="sm" onClick={handleClear}>
               Change
             </Button>
           </div>
@@ -141,9 +131,9 @@ export function LocalModelSearch({
             <Input
               type="text"
               value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setShowResults(true);
+              onChange={e => {
+                setSearchQuery(e.target.value)
+                setShowResults(true)
               }}
               onFocus={() => setShowResults(true)}
               placeholder="Search GGUF models on Hugging Face..."
@@ -157,19 +147,15 @@ export function LocalModelSearch({
           {/* Search results dropdown */}
           {showResults && (searchQuery || models.length > 0) && (
             <div className="absolute z-10 mt-1 w-full rounded-md border bg-popover shadow-lg">
-              {error && (
-                <div className="p-3 text-sm text-destructive">{error}</div>
-              )}
+              {error && <div className="p-3 text-sm text-destructive">{error}</div>}
 
               {!error && models.length === 0 && searchQuery && !isLoading && (
-                <div className="p-3 text-sm text-muted-foreground">
-                  No GGUF models found for "{searchQuery}"
-                </div>
+                <div className="p-3 text-sm text-muted-foreground">No GGUF models found for "{searchQuery}"</div>
               )}
 
               {!error && models.length > 0 && (
                 <ul className="max-h-64 overflow-auto py-1">
-                  {models.map((model) => (
+                  {models.map(model => (
                     <li key={model.id}>
                       <button
                         type="button"
@@ -177,16 +163,14 @@ export function LocalModelSearch({
                         onClick={() => handleSelectModel(model)}
                       >
                         <div className="flex items-center justify-between">
-                          <span className="font-medium text-sm truncate">
-                            {model.id}
-                          </span>
+                          <span className="font-medium text-sm truncate">{model.id}</span>
                           <span className="text-xs text-muted-foreground shrink-0 ml-2">
                             ⬇ {prettyBytes(model.downloads)}
                           </span>
                         </div>
                         {model.tags.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-1">
-                            {model.tags.slice(0, 3).map((tag) => (
+                            {model.tags.slice(0, 3).map(tag => (
                               <span
                                 key={tag}
                                 className="inline-flex items-center rounded-full bg-secondary px-2 py-0.5 text-xs text-secondary-foreground"
@@ -221,12 +205,7 @@ export function LocalModelSearch({
       )}
 
       {/* Click outside to close */}
-      {showResults && (
-        <div
-          className="fixed inset-0 z-0"
-          onClick={() => setShowResults(false)}
-        />
-      )}
+      {showResults && <div className="fixed inset-0 z-0" onClick={() => setShowResults(false)} />}
     </div>
-  );
+  )
 }

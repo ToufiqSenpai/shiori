@@ -1,0 +1,11 @@
+[*]
+end_of_line = lf
+insert_final_newline = true
+charset = utf-8
+trim_trailing_whitespace = true
+
+[*{.js,.jsx,.ts,.tsx}]
+tab_width = 2
+
+[*{.rs}]
+tab_width = 4

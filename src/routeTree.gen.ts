@@ -90,6 +90,4 @@ const rootRouteChildren: RootRouteChildren = {
   MainRoute: MainRoute,
   SetupRoute: SetupRoute,
 }
-export const routeTree = rootRouteImport
-  ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>()
+export const routeTree = rootRouteImport._addFileChildren(rootRouteChildren)._addFileTypes<FileRouteTypes>()

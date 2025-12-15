@@ -2,9 +2,7 @@
   "$schema": "./default.json",
   "identifier": "fs",
   "description": "File system access capability",
-  "windows": [
-    "main"
-  ],
+  "windows": ["main"],
   "permissions": [
     {
       "identifier": "fs:allow-read-text-file",

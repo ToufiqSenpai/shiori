@@ -1,6 +1,22 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuAction, SidebarMenuButton, SidebarMenuItem, SidebarProvider } from '../components/ui/sidebar'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../components/ui/dropdown-menu'
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuAction,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+} from '../components/ui/sidebar'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../components/ui/dropdown-menu'
 import { MoreHorizontal } from 'lucide-react'
 
 export const Route = createFileRoute('/main')({
@@ -37,7 +53,6 @@ function RouteComponent() {
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
-
                 </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
