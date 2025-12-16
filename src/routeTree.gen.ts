@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SetupRouteImport } from './routes/setup'
 import { Route as MainRouteImport } from './routes/main'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MainIndexRouteImport } from './routes/main.index'
 
 const SetupRoute = SetupRouteImport.update({
   id: '/setup',
@@ -28,34 +29,41 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MainIndexRoute = MainIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => MainRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/main': typeof MainRoute
+  '/main': typeof MainRouteWithChildren
   '/setup': typeof SetupRoute
+  '/main/': typeof MainIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/main': typeof MainRoute
   '/setup': typeof SetupRoute
+  '/main': typeof MainIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/main': typeof MainRoute
+  '/main': typeof MainRouteWithChildren
   '/setup': typeof SetupRoute
+  '/main/': typeof MainIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/main' | '/setup'
+  fullPaths: '/' | '/main' | '/setup' | '/main/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/main' | '/setup'
-  id: '__root__' | '/' | '/main' | '/setup'
+  to: '/' | '/setup' | '/main'
+  id: '__root__' | '/' | '/main' | '/setup' | '/main/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  MainRoute: typeof MainRoute
+  MainRoute: typeof MainRouteWithChildren
   SetupRoute: typeof SetupRoute
 }
 
@@ -82,12 +90,31 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/main/': {
+      id: '/main/'
+      path: '/'
+      fullPath: '/main/'
+      preLoaderRoute: typeof MainIndexRouteImport
+      parentRoute: typeof MainRoute
+    }
   }
 }
 
+interface MainRouteChildren {
+  MainIndexRoute: typeof MainIndexRoute
+}
+
+const MainRouteChildren: MainRouteChildren = {
+  MainIndexRoute: MainIndexRoute,
+}
+
+const MainRouteWithChildren = MainRoute._addFileChildren(MainRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  MainRoute: MainRoute,
+  MainRoute: MainRouteWithChildren,
   SetupRoute: SetupRoute,
 }
-export const routeTree = rootRouteImport._addFileChildren(rootRouteChildren)._addFileTypes<FileRouteTypes>()
+export const routeTree = rootRouteImport
+  ._addFileChildren(rootRouteChildren)
+  ._addFileTypes<FileRouteTypes>()

@@ -2,6 +2,7 @@ use anyhow::{Context, Result};
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use strum_macros::Display;
+use tracing::debug;
 
 use crate::{api::HTTP, security::secret_manager::SecretManager};
 
@@ -26,6 +27,8 @@ pub trait TextGeneration {
             Self::get_provider().to_string().to_uppercase()
         ))
         .unwrap_or_default();
+
+        debug!(api_key);
 
         Self::new_with_api_key(api_key)
     }
@@ -64,9 +67,12 @@ pub trait TextGeneration {
     }
 }
 
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TextGenerationModel {
-    id: String,
-    name: String,
+    pub id: String,
+    pub name: String,
+    pub provider: TextGenerationProvider,
 }
 
 pub struct Gemini {
@@ -119,6 +125,7 @@ impl TextGeneration for Gemini {
             .map(|model| TextGenerationModel {
                 id: model.name,
                 name: model.display_name,
+                provider: TextGenerationProvider::Gemini,
             })
             .collect();
 

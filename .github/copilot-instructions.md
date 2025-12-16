@@ -9,7 +9,7 @@ Shiori is a privacy-focused Tauri v2 desktop app that transcribes meetings using
 ### Frontend (React + TypeScript)
 - **Framework**: React 19 + Vite + TanStack Router (file-based routing in `src/routes/`)
 - **State Management**: Zustand stores in `src/stores/` - prefer Zustand over React context
-- **UI Components**: shadcn/ui (new-york style) in `src/components/ui/` - add new components via `npx shadcn@latest add <component>`
+- **UI Components**: shadcn/ui (new-york style) in `src/components/ui/` - add new components via `npx shadcn@latest add <component>`. See `.github/shadcn-instructions.md` for details.
 - **Styling**: Tailwind CSS v4 with `@` path alias pointing to `src/`
 
 ### Backend (Rust + Tauri)

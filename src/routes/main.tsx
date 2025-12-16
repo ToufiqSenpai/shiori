@@ -1,15 +1,17 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Outlet } from '@tanstack/react-router'
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
+  SidebarInset,
   SidebarMenu,
   SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
+  SidebarTrigger,
 } from '../components/ui/sidebar'
 import {
   DropdownMenu,
@@ -29,7 +31,7 @@ function RouteComponent() {
       <Sidebar>
         <SidebarContent>
           <SidebarGroup>
-            <SidebarGroupLabel>History</SidebarGroupLabel>
+            <SidebarGroupLabel>Summarize</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
@@ -49,7 +51,7 @@ function RouteComponent() {
                         <span>Edit Project</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem>
-                        <span>Delete Project</span>
+                        <span className="text-red-500">Delete Project</span>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -59,6 +61,15 @@ function RouteComponent() {
           </SidebarGroup>
         </SidebarContent>
       </Sidebar>
+      <SidebarInset>
+        <header className="flex h-10 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger className="-ml-1" />
+          <h1 className="text-sm font-medium">Shiori</h1>
+        </header>
+        <main className="flex-1 overflow-hidden p-4">
+          <Outlet />
+        </main>
+      </SidebarInset>
     </SidebarProvider>
   )
 }

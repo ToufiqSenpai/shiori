@@ -1,0 +1,9 @@
+{
+  "$schema": "./default.json",
+  "identifier": "dialog",
+  "description": "Dialog capabilities for Tauri applications",
+  "windows": ["main"],
+  "permissions": [
+    "dialog:allow-open"
+  ]
+}

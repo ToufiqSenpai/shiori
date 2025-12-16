@@ -289,7 +289,8 @@ export function DownloadStep() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    const allComplete = downloads.every(download => download.status === DownloadStatus.COMPLETE)
+    const allComplete =
+      downloads.length > 0 && downloads.every(download => download.status === DownloadStatus.COMPLETE)
 
     if (allComplete) setIsSetupComplete(true)
   }, [downloads])

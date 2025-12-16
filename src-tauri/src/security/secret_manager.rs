@@ -1,14 +1,18 @@
 use anyhow::Result;
 use keyring::Entry;
-use std::env::var;
+use tracing::debug;
 
 pub struct SecretManager;
 
 impl SecretManager {
+    const SERVICE_NAME: &'static str = "shiori";
+
     fn entry(key: &str) -> Result<Entry, keyring::Error> {
-        let service_name = var("TAURI_ENV_PKG_PRODUCT_NAME")
-            .unwrap_or_else(|_| env!("CARGO_PKG_NAME").to_string());
-        Entry::new(&service_name, key)
+        debug!(
+            service_name = Self::SERVICE_NAME,
+            key, "SecretManager::entry"
+        );
+        Entry::new(Self::SERVICE_NAME, key)
     }
 
     pub fn set(key: &str, value: &str) -> Result<(), keyring::Error> {

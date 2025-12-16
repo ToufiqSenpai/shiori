@@ -18,3 +18,13 @@ export function setTextGenerationApiKey(provider: TextGenerationProvider, apiKey
 export function downloadSpeechToTextModel(model: SpeechToTextModel): Promise<void> {
   return invoke<void>('download_speech_to_text_model', { model })
 }
+
+export function getTextGenerationModels(): Promise<TextGenerationModel[]> {
+  return invoke<TextGenerationModel[]>('get_text_generation_models')
+}
+
+export interface TextGenerationModel {
+  id: string
+  name: string
+  provider: TextGenerationProvider
+}

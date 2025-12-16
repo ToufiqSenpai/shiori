@@ -1,7 +1,9 @@
 use super::speech_to_text::SpeechToTextModel;
 use crate::{
     api::hugging_face::get_repository_files,
-    features::model::text_generation::{Gemini, TextGeneration, TextGenerationProvider},
+    features::model::text_generation::{
+        Gemini, TextGeneration, TextGenerationModel, TextGenerationProvider,
+    },
     state::{
         download::{Checksum, FileDownload},
         AppState,
@@ -48,22 +50,6 @@ pub async fn get_speech_to_text_models() -> Result<Vec<GetSpeechToTextModelResul
         .collect();
 
     Ok(files)
-}
-
-#[tauri::command]
-pub async fn set_text_generation_api_key(
-    provider: TextGenerationProvider,
-    api_key: String,
-) -> Result<bool, String> {
-    match provider {
-        TextGenerationProvider::Gemini => {
-            let is_valid = Gemini::set_api_key(api_key)
-                .await
-                .map_err(|e| format!("Error setting Gemini API key: {}", e))?;
-
-            Ok(is_valid)
-        }
-    }
 }
 
 #[tauri::command]
@@ -115,4 +101,31 @@ pub async fn download_speech_to_text_model(
         .map_err(|e| format!("Failed to start download: {}", e))?;
 
     Ok(())
+}
+
+#[tauri::command]
+pub async fn set_text_generation_api_key(
+    provider: TextGenerationProvider,
+    api_key: String,
+) -> Result<bool, String> {
+    match provider {
+        TextGenerationProvider::Gemini => {
+            let is_valid = Gemini::set_api_key(api_key)
+                .await
+                .map_err(|e| format!("Error setting Gemini API key: {}", e))?;
+
+            Ok(is_valid)
+        }
+    }
+}
+
+#[tauri::command]
+pub async fn get_text_generation_models() -> Result<Vec<TextGenerationModel>, String> {
+    let gemini = Gemini::new();
+    let gemini_models = gemini
+        .get_models()
+        .await
+        .map_err(|e| format!("Error fetching Gemini models: {}", e))?;
+
+    Ok(gemini_models)
 }
