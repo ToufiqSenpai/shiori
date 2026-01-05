@@ -7,12 +7,14 @@ Shiori is a privacy-focused Tauri v2 desktop app that transcribes meetings using
 ## Architecture
 
 ### Frontend (React + TypeScript)
+
 - **Framework**: React 19 + Vite + TanStack Router (file-based routing in `src/routes/`)
 - **State Management**: Zustand stores in `src/stores/` - prefer Zustand over React context
 - **UI Components**: shadcn/ui (new-york style) in `src/components/ui/` - add new components via `npx shadcn@latest add <component>`. See `.github/shadcn-instructions.md` for details.
 - **Styling**: Tailwind CSS v4 with `@` path alias pointing to `src/`
 
 ### Backend (Rust + Tauri)
+
 - **Entry point**: `src-tauri/src/lib.rs` - registers Tauri commands and plugins
 - **Feature modules**: `src-tauri/src/features/` - organize by domain (e.g., `model/`)
 - **API clients**: `src-tauri/src/api/` - external service integrations (Hugging Face)
@@ -22,6 +24,7 @@ Shiori is a privacy-focused Tauri v2 desktop app that transcribes meetings using
 ## Key Patterns
 
 ### Tauri Command Pattern
+
 1. Define command in Rust: `src-tauri/src/features/<domain>/commands.rs`
 2. Register in `lib.rs` invoke_handler
 3. Create TypeScript wrapper in `src/api/<domain>.ts` using `invoke()`
@@ -34,12 +37,15 @@ export function getSpeechToTextModels(): Promise<SpeechToTextModelResult[]> {
 ```
 
 ### Frontend-Backend Events (Download Progress)
+
 - Rust emits events via `tauri::Emitter` with `app.emit("download", DownloadEvent::*)`
 - TypeScript listens via `listen<T>('event-name', callback)` from `@tauri-apps/api/event`
 - See `src/api/download.ts` and `src/stores/download-store.ts` for pattern
 
 ### Enums Synchronization
+
 Keep Rust and TypeScript enums in sync:
+
 - Rust: `src-tauri/src/features/model/speech_to_text.rs`, `text_generation.rs`
 - TypeScript: `src/enums/` directory
 - Use `#[serde(rename_all = "kebab-case")]` in Rust to match TypeScript conventions

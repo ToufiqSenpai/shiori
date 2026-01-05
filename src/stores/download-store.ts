@@ -1,12 +1,41 @@
+import { listen } from '@tauri-apps/api/event'
 import { create } from 'zustand'
-import { DownloadEvent, FileDownload, onDownloadEvent } from '../api/download'
+
+import { DownloadStatus } from '../enums/download-status'
+
+export interface FileDownload {
+  id: string
+  size: number
+  progressBytes: number
+  speedBytes: number
+  url: string
+  savePath: string
+  name?: string
+  checksum?: { type: string; value: string }
+  status: DownloadStatus
+}
+
+export enum DownloadEvent {
+  ADDED = 'added',
+  PROGRESS = 'progress',
+  STATUS_CHANGED = 'status-changed',
+  ERROR = 'error',
+}
+
+export type DownloadEventData =
+  | { type: DownloadEvent.ADDED; payload: FileDownload }
+  | { type: DownloadEvent.PROGRESS; payload: { id: string; progressBytes: number; speedBytes: number } }
+  | { type: DownloadEvent.STATUS_CHANGED; payload: { id: string; status: DownloadStatus } }
+  | { type: DownloadEvent.ERROR; payload: { id: string; error: string } }
 
 export interface DownloadState {
   downloads: FileDownload[]
 }
 
 export const useDownloadStore = create<DownloadState>((set, get) => {
-  onDownloadEvent(data => {
+  listen<DownloadEventData>("download", event => {
+    const data = event.payload
+    
     switch (data.type) {
       case DownloadEvent.ADDED:
         // Avoid duplicates

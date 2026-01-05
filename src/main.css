@@ -1,8 +1,10 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
+@plugin '@tailwindcss/typography';
 
 body {
   user-select: none;
+  overflow: hidden;
 }
 
 @custom-variant dark (&:is(.dark *));
@@ -120,5 +122,22 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #summary-panel,
+  #summary-panel * {
+    visibility: visible;
+  }
+
+  #summary-panel {
+    position: absolute;
+    left: 0;
+    top: 0;
   }
 }

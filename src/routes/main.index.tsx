@@ -1,31 +1,21 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { open } from '@tauri-apps/plugin-dialog'
+import { FileAudio, FileVideo, Sparkles, Upload } from 'lucide-react'
 import { useState } from 'react'
-import { FileAudio, FileVideo, Upload, Sparkles } from 'lucide-react'
+
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { getTextGenerationModels, TextGenerationModel } from '../api/model'
-import { useSettingsStore } from '../stores/settings-store'
-import { getLanguages } from '../api/summarize'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
-export const Route = createFileRoute('/main/')({
-  component: RouteComponent,
-})
+import { TextGenerationProvider } from '../enums/text-generation-provider'
+import { store, useSettings } from '../hooks/use-settings'
+import { command } from '../utils/tauri'
 
-const LANGUAGES = await getLanguages()
+// --- Constants & Types ---
 
-// Fetch text generation models only if setup is complete
-let textGenerationModels: TextGenerationModel[] = []
-if (useSettingsStore.getState().isSetupComplete) {
-  textGenerationModels = await getTextGenerationModels()
-}
+const AUDIO_EXTENSIONS = ['mp3', 'wav', 'm4a', 'ogg', 'flac']
+const VIDEO_EXTENSIONS = ['mp4', 'webm', 'mkv', 'avi', 'mov']
+const ALL_EXTENSIONS = [...AUDIO_EXTENSIONS, ...VIDEO_EXTENSIONS]
 
 interface SelectedFile {
   name: string
@@ -33,104 +23,76 @@ interface SelectedFile {
   isVideo: boolean
 }
 
+interface TextGenerationModel {
+  id: string
+  name: string
+  provider: TextGenerationProvider
+}
+
+interface LanguageInfo {
+  code: string
+  displayName: string
+}
+
+// --- Route Definition ---
+
+export const Route = createFileRoute('/main/')({
+  component: RouteComponent,
+  loader: async () => {
+    const [languages, setupComplete] = await Promise.all([command<LanguageInfo[]>("get_languages"), store.get<boolean>('setupComplete')])
+
+    let models: TextGenerationModel[] = []
+    if (setupComplete) {
+      models = await command<TextGenerationModel[]>("get_text_generation_models")
+    }
+
+    return { languages, models }
+  },
+})
+
+// --- Main Component ---
+
 function RouteComponent() {
+  const { languages, models } = Route.useLoaderData()
+  const navigate = useNavigate()
+
   const [selectedFile, setSelectedFile] = useState<SelectedFile | null>(null)
-  const [language, setLanguage] = useState('')
-  const [model, setModel] = useState('')
+  const [language, setLanguage] = useState<string>('')
+  const [_, setTextGenerationProvider] = useSettings('model.textGeneration.provider', 'gemini')
+  const [model, setModel] = useSettings('model.textGeneration.model', models[0]?.id || '')
 
-  const handleOpenFile = async () => {
-    const file = await open({
-      multiple: false,
-      filters: [
-        {
-          name: 'Audio/Video',
-          extensions: ['mp3', 'wav', 'm4a', 'ogg', 'flac', 'mp4', 'webm', 'mkv', 'avi', 'mov'],
-        },
-      ],
-    })
+  const handleFileSelect = (file: SelectedFile | null) => {
+    setSelectedFile(file)
+  }
 
-    if (file) {
-      const fileName = file.split(/[/\\]/).pop() || file
-      const videoExtensions = ['mp4', 'webm', 'mkv', 'avi', 'mov']
-      const ext = fileName.split('.').pop()?.toLowerCase() || ''
-      const isVideo = videoExtensions.includes(ext)
-
-      setSelectedFile({
-        name: fileName,
-        path: file,
-        isVideo,
-      })
+  const onTextGenerationModelChange = (modelId: string) => {
+    setModel(modelId)
+    const selectedModel = models.find(m => m.id === modelId)
+    if (selectedModel) {
+      setTextGenerationProvider(selectedModel.provider)
     }
   }
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    // Note: Drag and drop from file system in Tauri requires different handling
-    // For now, we'll just open the dialog on drop as a fallback
-    handleOpenFile()
-  }
+  const onStartButtonClick = () => {
+    if (!selectedFile) return
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
+    navigate({ to: '/main/progress' })
+
+    setTimeout(async () => {
+      await command("summarize", { filePath: selectedFile.path, language: language })
+    }, 0)
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col p-4">
       <div className="flex-1 space-y-6 overflow-y-auto">
-        <div>
-          <h2 className="text-lg font-semibold">Summarize Audio/Video</h2>
-          <p className="text-muted-foreground text-sm">
-            Upload an audio or video file to transcribe and generate a summary using AI.
-          </p>
-        </div>
+        <HeaderSection />
 
-        {/* Audio/Video File Input */}
         <div className="space-y-2">
           <Label>Audio/Video File</Label>
-          <div
-            onClick={handleOpenFile}
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            className="border-input hover:border-muted-foreground/50 hover:bg-muted/50 relative flex min-h-40 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors"
-          >
-            {selectedFile ? (
-              <div className="flex flex-col items-center gap-2 p-4 text-center">
-                {selectedFile.isVideo ? (
-                  <FileVideo className="text-primary h-10 w-10" />
-                ) : (
-                  <FileAudio className="text-primary h-10 w-10" />
-                )}
-                <div>
-                  <p className="font-medium">{selectedFile.name}</p>
-                  <p className="text-muted-foreground text-xs">{selectedFile.path}</p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setSelectedFile(null)
-                  }}
-                >
-                  Remove
-                </Button>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center gap-2 p-4 text-center">
-                <Upload className="text-muted-foreground h-10 w-10" />
-                <div>
-                  <p className="font-medium">Click to select audio or video file</p>
-                  <p className="text-muted-foreground text-sm">or drag and drop</p>
-                </div>
-                <p className="text-muted-foreground text-xs">
-                  Supports MP3, WAV, M4A, MP4, WebM, and other formats
-                </p>
-              </div>
-            )}
-          </div>
+          <FileDropZone selectedFile={selectedFile} onFileSelect={handleFileSelect} />
         </div>
 
-        {/* Language Select */}
         <div className="space-y-2">
           <Label htmlFor="language">Language</Label>
           <Select value={language} onValueChange={setLanguage}>
@@ -138,7 +100,7 @@ function RouteComponent() {
               <SelectValue placeholder="Select language" />
             </SelectTrigger>
             <SelectContent>
-              {LANGUAGES.map((lang) => (
+              {languages.map(lang => (
                 <SelectItem key={lang.code} value={lang.code}>
                   {lang.displayName}
                 </SelectItem>
@@ -147,15 +109,14 @@ function RouteComponent() {
           </Select>
         </div>
 
-        {/* Text Generation Model Select */}
         <div className="space-y-2">
           <Label htmlFor="model">Text Generation Model</Label>
-          <Select value={model} onValueChange={setModel}>
+          <Select value={model} onValueChange={onTextGenerationModelChange}>
             <SelectTrigger id="model">
               <SelectValue placeholder="Select AI model" />
             </SelectTrigger>
             <SelectContent>
-              {textGenerationModels.map((m) => (
+              {models.map(m => (
                 <SelectItem key={m.id} value={m.id}>
                   {m.name}
                 </SelectItem>
@@ -165,12 +126,110 @@ function RouteComponent() {
         </div>
       </div>
 
-      {/* Summarize Button - Sticky Bottom */}
-      <div className="bg-background sticky bottom-0 border-t pt-4">
-        <Button className="w-full" size="lg" disabled={!selectedFile || !language || !model}>
+      <div className="sticky bottom-0 border-t bg-background pt-4">
+        <Button
+          className="w-full"
+          size="lg"
+          disabled={!selectedFile || !language || !model}
+          onClick={onStartButtonClick}
+        >
           <Sparkles className="mr-2 h-4 w-4" />
           Start Summarize
         </Button>
+      </div>
+    </div>
+  )
+}
+
+// --- Sub-Components ---
+
+function HeaderSection() {
+  return (
+    <div>
+      <h2 className="text-lg font-semibold">Summarize Audio/Video</h2>
+      <p className="text-sm text-muted-foreground">
+        Upload an audio or video file to transcribe and generate a summary using AI.
+      </p>
+    </div>
+  )
+}
+
+interface FileDropZoneProps {
+  selectedFile: SelectedFile | null
+  onFileSelect: (file: SelectedFile | null) => void
+}
+
+function FileDropZone({ selectedFile, onFileSelect }: FileDropZoneProps) {
+  const handleOpenFile = async () => {
+    const file = await open({
+      multiple: false,
+      filters: [{ name: 'Audio/Video', extensions: ALL_EXTENSIONS }],
+    })
+
+    if (file) {
+      const fileName = file.split(/[/\\]/).pop() || file
+      const ext = fileName.split('.').pop()?.toLowerCase() || ''
+      const isVideo = VIDEO_EXTENSIONS.includes(ext)
+
+      onFileSelect({
+        name: fileName,
+        path: file,
+        isVideo,
+      })
+    }
+  }
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    handleOpenFile()
+  }
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+  }
+
+  if (selectedFile) {
+    return (
+      <div className="relative flex min-h-40 flex-col items-center justify-center rounded-lg border-2 border-dashed border-input p-4 text-center">
+        <div className="flex flex-col items-center gap-2">
+          {selectedFile.isVideo ? (
+            <FileVideo className="h-10 w-10 text-primary" />
+          ) : (
+            <FileAudio className="h-10 w-10 text-primary" />
+          )}
+          <div>
+            <p className="font-medium">{selectedFile.name}</p>
+            <p className="text-xs text-muted-foreground">{selectedFile.path}</p>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={e => {
+              e.stopPropagation()
+              onFileSelect(null)
+            }}
+          >
+            Remove
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div
+      onClick={handleOpenFile}
+      onDrop={handleDrop}
+      onDragOver={handleDragOver}
+      className="relative flex min-h-40 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-input transition-colors hover:border-muted-foreground/50 hover:bg-muted/50"
+    >
+      <div className="flex flex-col items-center gap-2 p-4 text-center">
+        <Upload className="h-10 w-10 text-muted-foreground" />
+        <div>
+          <p className="font-medium">Click to select audio or video file</p>
+          <p className="text-sm text-muted-foreground">or drag and drop</p>
+        </div>
+        <p className="text-xs text-muted-foreground">Supports MP3, WAV, MP4, MKV, and more</p>
       </div>
     </div>
   )

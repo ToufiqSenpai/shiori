@@ -10,13 +10,21 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SetupRouteImport } from './routes/setup'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as MainRouteImport } from './routes/main'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MainIndexRouteImport } from './routes/main.index'
+import { Route as MainProgressRouteImport } from './routes/main.progress'
+import { Route as MainSummaryIdRouteImport } from './routes/main.$summaryId'
 
 const SetupRoute = SetupRouteImport.update({
   id: '/setup',
   path: '/setup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MainRoute = MainRouteImport.update({
@@ -34,36 +42,77 @@ const MainIndexRoute = MainIndexRouteImport.update({
   path: '/',
   getParentRoute: () => MainRoute,
 } as any)
+const MainProgressRoute = MainProgressRouteImport.update({
+  id: '/progress',
+  path: '/progress',
+  getParentRoute: () => MainRoute,
+} as any)
+const MainSummaryIdRoute = MainSummaryIdRouteImport.update({
+  id: '/$summaryId',
+  path: '/$summaryId',
+  getParentRoute: () => MainRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/main': typeof MainRouteWithChildren
+  '/settings': typeof SettingsRoute
   '/setup': typeof SetupRoute
+  '/main/$summaryId': typeof MainSummaryIdRoute
+  '/main/progress': typeof MainProgressRoute
   '/main/': typeof MainIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/settings': typeof SettingsRoute
   '/setup': typeof SetupRoute
+  '/main/$summaryId': typeof MainSummaryIdRoute
+  '/main/progress': typeof MainProgressRoute
   '/main': typeof MainIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/main': typeof MainRouteWithChildren
+  '/settings': typeof SettingsRoute
   '/setup': typeof SetupRoute
+  '/main/$summaryId': typeof MainSummaryIdRoute
+  '/main/progress': typeof MainProgressRoute
   '/main/': typeof MainIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/main' | '/setup' | '/main/'
+  fullPaths:
+    | '/'
+    | '/main'
+    | '/settings'
+    | '/setup'
+    | '/main/$summaryId'
+    | '/main/progress'
+    | '/main/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/setup' | '/main'
-  id: '__root__' | '/' | '/main' | '/setup' | '/main/'
+  to:
+    | '/'
+    | '/settings'
+    | '/setup'
+    | '/main/$summaryId'
+    | '/main/progress'
+    | '/main'
+  id:
+    | '__root__'
+    | '/'
+    | '/main'
+    | '/settings'
+    | '/setup'
+    | '/main/$summaryId'
+    | '/main/progress'
+    | '/main/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   MainRoute: typeof MainRouteWithChildren
+  SettingsRoute: typeof SettingsRoute
   SetupRoute: typeof SetupRoute
 }
 
@@ -74,6 +123,13 @@ declare module '@tanstack/react-router' {
       path: '/setup'
       fullPath: '/setup'
       preLoaderRoute: typeof SetupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/main': {
@@ -97,14 +153,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MainIndexRouteImport
       parentRoute: typeof MainRoute
     }
+    '/main/progress': {
+      id: '/main/progress'
+      path: '/progress'
+      fullPath: '/main/progress'
+      preLoaderRoute: typeof MainProgressRouteImport
+      parentRoute: typeof MainRoute
+    }
+    '/main/$summaryId': {
+      id: '/main/$summaryId'
+      path: '/$summaryId'
+      fullPath: '/main/$summaryId'
+      preLoaderRoute: typeof MainSummaryIdRouteImport
+      parentRoute: typeof MainRoute
+    }
   }
 }
 
 interface MainRouteChildren {
+  MainSummaryIdRoute: typeof MainSummaryIdRoute
+  MainProgressRoute: typeof MainProgressRoute
   MainIndexRoute: typeof MainIndexRoute
 }
 
 const MainRouteChildren: MainRouteChildren = {
+  MainSummaryIdRoute: MainSummaryIdRoute,
+  MainProgressRoute: MainProgressRoute,
   MainIndexRoute: MainIndexRoute,
 }
 
@@ -113,6 +187,7 @@ const MainRouteWithChildren = MainRoute._addFileChildren(MainRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   MainRoute: MainRouteWithChildren,
+  SettingsRoute: SettingsRoute,
   SetupRoute: SetupRoute,
 }
 export const routeTree = rootRouteImport

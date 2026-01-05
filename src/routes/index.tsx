@@ -1,12 +1,13 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useSettingsStore } from '../stores/settings-store'
+
+import { useSettings } from '../hooks/use-settings'
 
 export const Route = createFileRoute('/')({
   component: RouteComponent,
 })
 
 function RouteComponent() {
-  const { isSetupComplete } = useSettingsStore()
+  const [isSetupComplete] = useSettings('setupComplete', false)
   const navigate = useNavigate()
 
   if (isSetupComplete) {

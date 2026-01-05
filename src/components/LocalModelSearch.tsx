@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback } from 'react'
-import { useDebounceValue } from 'usehooks-ts'
 import axios from 'axios'
-import { Search, Loader2, ExternalLink, Package } from 'lucide-react'
-import { Input } from '../ui/input'
-import { Button } from '../ui/button'
+import { ExternalLink, Loader2, Package, Search } from 'lucide-react'
 import prettyBytes from 'pretty-bytes'
-import { useSetupStore } from '@/stores/setup-store'
+import { useCallback, useEffect, useState } from 'react'
+import { useDebounceValue } from 'usehooks-ts'
+
+import { Button } from './ui/button'
+import { Input } from './ui/input'
 
 export interface HuggingFaceModel {
   id: string
@@ -22,7 +22,6 @@ interface LocalModelSearchProps {
 }
 
 export function LocalModelSearch({ value, onChange }: LocalModelSearchProps) {
-  const { setState } = useSetupStore()
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedQuery] = useDebounceValue(searchQuery, 500)
   const [models, setModels] = useState<HuggingFaceModel[]>([])
@@ -35,10 +34,6 @@ export function LocalModelSearch({ value, onChange }: LocalModelSearchProps) {
     if (!query.trim()) {
       setModels([])
       return
-    }
-
-    if (modelStepError) {
-      setState({ modelStepError: '' })
     }
 
     setIsLoading(true)
