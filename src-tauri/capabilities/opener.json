@@ -1,0 +1,18 @@
+{
+  "$schema": "./default.json",
+  "identifier": "opener",
+  "description": "Capability for opening files and URLs with the system default applications.",
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [
+        {
+          "url": "https://aistudio.google.com/app/apikey"
+        }
+      ]
+    }
+  ]
+}

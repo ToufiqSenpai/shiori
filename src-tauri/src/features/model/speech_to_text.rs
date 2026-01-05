@@ -79,50 +79,50 @@ impl Whisper {
         let (tx, rx) = oneshot::channel();
 
         thread::Builder::new()
-        .name("whisper-transcription".to_string())
-        .stack_size(10 * 1024 * 1024) // 10 MB stack size
-        .spawn(move || {
-            let result = (|| -> anyhow::Result<Vec<Segment>> {
-                let ctx = WhisperContext::new_with_params(
-                    model_path.to_string_lossy().as_ref(),
-                    WhisperContextParameters::default(),
-                )
-                .context("Failed to create Whisper context")?;
+            .name("whisper-transcription".to_string())
+            .stack_size(10 * 1024 * 1024) // 10 MB stack size
+            .spawn(move || {
+                let result = (|| -> anyhow::Result<Vec<Segment>> {
+                    let ctx = WhisperContext::new_with_params(
+                        model_path.to_string_lossy().as_ref(),
+                        WhisperContextParameters::default(),
+                    )
+                    .context("Failed to create Whisper context")?;
 
-                let mut params = FullParams::new(SamplingStrategy::BeamSearch {
-                    beam_size: 5,
-                    patience: -1.0,
-                });
+                    let mut params = FullParams::new(SamplingStrategy::BeamSearch {
+                        beam_size: 5,
+                        patience: -1.0,
+                    });
 
-                params.set_print_realtime(false);
-                params.set_print_progress(false);
+                    params.set_print_realtime(false);
+                    params.set_print_progress(false);
 
-                params.set_language(Some(language.code()));
+                    params.set_language(Some(language.code()));
 
-                let mut state = ctx
-                    .create_state()
-                    .context("Failed to create Whisper state")?;
+                    let mut state = ctx
+                        .create_state()
+                        .context("Failed to create Whisper state")?;
 
-                state
-                    .full(params, &audio_data[..])
-                    .context("Failed to run full transcription")?;
+                    state
+                        .full(params, &audio_data[..])
+                        .context("Failed to run full transcription")?;
 
-                let segments = state
-                    .as_iter()
-                    .map(|segment| Segment {
-                        text: segment.to_string(),
-                        start: (segment.start_timestamp() as f64) / 100.0,
-                        end: (segment.end_timestamp() as f64) / 100.0,
-                    })
-                    .collect::<Vec<Segment>>();
+                    let segments = state
+                        .as_iter()
+                        .map(|segment| Segment {
+                            text: segment.to_string(),
+                            start: (segment.start_timestamp() as f64) / 100.0,
+                            end: (segment.end_timestamp() as f64) / 100.0,
+                        })
+                        .collect::<Vec<Segment>>();
 
-                Ok(segments)
-            })();
+                    Ok(segments)
+                })();
 
-            // Kirim hasil balik ke async caller
-            let _ = tx.send(result);
-        })
-        .context("Failed to spawn transcription thread")?;
+                // Kirim hasil balik ke async caller
+                let _ = tx.send(result);
+            })
+            .context("Failed to spawn transcription thread")?;
 
         rx.await.context("Transcription thread panicked")?
     }
@@ -141,8 +141,9 @@ mod tests {
             .join("video")
             .join("stt.mp4");
         let audio_data = load_f32le_audio(&audio_path).await?;
-        let whisper =
-            Whisper::new(PathBuf::from("D:\\Rust\\ml-research\\models\\ggml-medium-q8_0.bin"));
+        let whisper = Whisper::new(PathBuf::from(
+            "D:\\Rust\\ml-research\\models\\ggml-medium-q8_0.bin",
+        ));
 
         let segments = whisper.transcribe(audio_data, Language::EnUs).await?;
 

@@ -31,9 +31,9 @@ impl ErrorCode {
 }
 
 impl From<anyhow::Error> for ErrorCode {
-  fn from(value: anyhow::Error) -> Self {
-    map_anyhow_to_code(&value)
-  }
+    fn from(value: anyhow::Error) -> Self {
+        map_anyhow_to_code(&value)
+    }
 }
 
 fn map_anyhow_to_code(err: &anyhow::Error) -> ErrorCode {

@@ -1,16 +1,20 @@
 use std::{path::PathBuf, vec};
 
-use crate::{error::ErrorCode, features::{
-    model::{
-        speech_to_text::{Segment, SpeechToTextModel, Whisper},
-        text_generation::{Message, Role, get_text_generation},
+use crate::{
+    error::ErrorCode,
+    features::{
+        model::{
+            speech_to_text::{Segment, SpeechToTextModel, Whisper},
+            text_generation::{get_text_generation, Message, Role},
+        },
+        summarize::{
+            audio::load_f32le_audio,
+            entities::Summary,
+            language::{Language, LanguageInfo},
+        },
     },
-    summarize::{
-        audio::load_f32le_audio,
-        entities::Summary,
-        language::{Language, LanguageInfo},
-    },
-}, utils::tauri::get_settings_store};
+    utils::tauri::get_settings_store,
+};
 use anyhow::{Context, Result};
 use serde::Serialize;
 use sqlx::SqlitePool;

@@ -17,8 +17,8 @@ use std::path::PathBuf;
 
 use sqlx::migrate::Migrator;
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
-use tauri::Manager;
 use tauri::path::BaseDirectory;
+use tauri::Manager;
 use tracing_appender::rolling;
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -49,9 +49,9 @@ pub fn run() {
     install_panic_hook();
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_fs::init())
         .setup(|app| {
             // Setup logging
             let file_appender = rolling::daily(app.path().app_log_dir().unwrap(), "app.log");
@@ -104,7 +104,10 @@ pub fn run() {
                 let migrator = Migrator::new(migrations_dir)
                     .await
                     .expect("Failed to initialize database migrator");
-                migrator.run(&pool).await.expect("Failed to run database migrations");
+                migrator
+                    .run(&pool)
+                    .await
+                    .expect("Failed to run database migrations");
 
                 pool
             });

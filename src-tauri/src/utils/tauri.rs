@@ -1,5 +1,5 @@
-use std::sync::Arc;
 use anyhow::{Context, Result};
+use std::sync::Arc;
 use tauri::{AppHandle, Manager, Wry};
 use tauri_plugin_store::{Store, StoreExt};
 

@@ -1,8 +1,12 @@
 use super::speech_to_text::SpeechToTextModel;
 use crate::{
-    api::HTTP, error::ErrorCode, features::model::text_generation::{Model, Provider, gemini::Gemini}, state::{
-        AppState, download::{Checksum, FileDownload}
-    }
+    api::HTTP,
+    error::ErrorCode,
+    features::model::text_generation::{gemini::Gemini, Model, Provider},
+    state::{
+        download::{Checksum, FileDownload},
+        AppState,
+    },
 };
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
@@ -18,7 +22,7 @@ pub struct GetSpeechToTextModelResult {
 #[derive(Debug, Deserialize)]
 struct RepositoryTree {
     pub size: u64,
-    pub path: String
+    pub path: String,
 }
 
 #[tauri::command]
@@ -26,7 +30,7 @@ pub async fn get_speech_to_text_models() -> Result<Vec<GetSpeechToTextModelResul
     let stt_filenames = SpeechToTextModel::iter()
         .map(|model| model.filename())
         .collect::<Vec<&str>>();
-    
+
     let models = HTTP
         .get("https://huggingface.co/api/models/ggerganov/whisper.cpp/tree/main")
         .send()

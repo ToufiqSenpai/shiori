@@ -1,7 +1,10 @@
 use std::{fmt, str::FromStr};
 
 use serde::{Deserialize, Serialize};
-use sqlx::{Decode, Encode, Sqlite, Type, sqlite::{SqliteArgumentValue, SqliteValueRef}};
+use sqlx::{
+    sqlite::{SqliteArgumentValue, SqliteValueRef},
+    Decode, Encode, Sqlite, Type,
+};
 use strum_macros::EnumIter;
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, EnumIter)]
@@ -78,8 +81,7 @@ impl Type<Sqlite> for Language {
 impl<'r> Decode<'r, Sqlite> for Language {
     fn decode(value: SqliteValueRef<'r>) -> Result<Self, sqlx::error::BoxDynError> {
         let s = <String as Decode<Sqlite>>::decode(value)?;
-        Language::from_str(&s)
-            .map_err(|_| format!("invalid language value in db: {}", s).into())
+        Language::from_str(&s).map_err(|_| format!("invalid language value in db: {}", s).into())
     }
 }
 

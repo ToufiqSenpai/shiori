@@ -1,89 +1,51 @@
 use std::env;
-use std::path::Path;
-use std::process::Command;
+use std::fs;
+use std::fs::create_dir_all;
+use std::io::copy;
+use std::io::Cursor;
+use std::path::PathBuf;
 
 fn main() {
+    #[cfg(not(debug_assertions))]
     download_ffmpeg();
+
     tauri_build::build()
 }
 
 fn download_ffmpeg() {
-    let profile = env::var("PROFILE").unwrap_or_default();
+    let bin_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("bin");
+    let ffmpeg_path = bin_dir.join("ffmpeg.exe");
 
-    if profile != "release" {
+    if ffmpeg_path.exists() {
+        println!("cargo:warning=ffmpeg.exe already exists, skipping download");
         return;
     }
 
-    // Windows only
-    if env::var("CARGO_CFG_WINDOWS").is_err() {
-        return;
-    }
+    println!("cargo:warning=Downloading ffmpeg.exe...");
 
-    let ffmpeg_bin = Path::new("bin/ffmpeg.exe");
+    create_dir_all(&bin_dir).expect("Failed to create bin directory");
 
-    if ffmpeg_bin.exists() {
-        println!("cargo:warning=Using existing ffmpeg.exe");
-        return;
-    }
-
-    println!("cargo:warning=Downloading ffmpeg for Windows");
-
-    // Download ffmpeg essentials from gyan.dev (much smaller, ~80MB)
-    let ffmpeg_url = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip";
-    let zip_path = "bin/ffmpeg.zip";
-
-    // Create bin directory if it doesn't exist
-    std::fs::create_dir_all("bin").expect("Failed to create bin directory");
-
-    // Download using PowerShell
-    let download_status = Command::new("powershell")
-        .args(&[
-            "-Command",
-            &format!("Invoke-WebRequest -Uri '{}' -OutFile '{}'", ffmpeg_url, zip_path)
-        ])
-        .status()
+    let client = reqwest::blocking::Client::builder()
+        .timeout(std::time::Duration::from_secs(300))
+        .build()
+        .expect("Failed to build HTTP client");
+    let response = client
+        .get("https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip")
+        .send()
         .expect("Failed to download ffmpeg");
+    let cursor = Cursor::new(response.bytes().expect("Failed to read response bytes"));
+    let mut zip = zip::ZipArchive::new(cursor).expect("Failed to read zip archive");
 
-    if !download_status.success() {
-        panic!("Failed to download ffmpeg");
+    for i in 0..zip.len() {
+        let mut file = zip.by_index(i).expect("Failed to get zip");
+
+        if file.name().ends_with("ffmpeg.exe") {
+            println!("cargo:warning=Extracting ffmpeg.exe...");
+
+            let mut out_file = fs::File::create(&ffmpeg_path).expect("Failed to create output file");
+            copy(&mut file, &mut out_file).expect("Failed to copy ffmpeg.exe");
+
+            break;
+        }
     }
-
-    println!("cargo:warning=Extracting ffmpeg");
-
-    // Extract using PowerShell
-    let extract_status = Command::new("powershell")
-        .args(&[
-            "-Command",
-            &format!("Expand-Archive -Path '{}' -DestinationPath 'bin/temp' -Force", zip_path)
-        ])
-        .status()
-        .expect("Failed to extract ffmpeg");
-
-    if !extract_status.success() {
-        panic!("Failed to extract ffmpeg");
-    }
-
-    // Move ffmpeg.exe from extracted folder to bin/
-    // Gyan.dev uses pattern: ffmpeg-{version}-essentials_build/bin/ffmpeg.exe
-    let copy_status = Command::new("powershell")
-        .args(&[
-            "-Command",
-            "Get-ChildItem -Path 'bin/temp/*/bin/ffmpeg.exe' -Recurse | Copy-Item -Destination 'bin/ffmpeg.exe' -Force"
-        ])
-        .status()
-        .expect("Failed to copy ffmpeg.exe");
-
-    if !copy_status.success() {
-        panic!("Failed to copy ffmpeg.exe");
-    }
-
-    // Cleanup
-    let _ = std::fs::remove_file(zip_path);
-    let _ = std::fs::remove_dir_all("bin/temp");
-
-    if !ffmpeg_bin.exists() {
-        panic!("ffmpeg.exe not found after download");
-    }
-
-    println!("cargo:warning=FFmpeg download completed");
 }

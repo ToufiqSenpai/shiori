@@ -221,11 +221,7 @@ pub mod gemini {
                 "{}_API_KEY",
                 Self::get_provider().to_string().to_uppercase()
             );
-            SecretManager::set(
-                &token_key,
-                &api_key,
-            )
-            .context("Failed to store API key securely")?;
+            SecretManager::set(&token_key, &api_key).context("Failed to store API key securely")?;
 
             let models = Self::get_models().await;
 
@@ -240,7 +236,7 @@ pub mod gemini {
                         }
                     }
                     SecretManager::delete(&token_key)
-                    .context("Failed to delete invalid API key from secure storage")?;
+                        .context("Failed to delete invalid API key from secure storage")?;
 
                     Err(e)
                 }
@@ -262,9 +258,6 @@ pub mod gemini {
                 .send()
                 .await
                 .context("Failed to fetch models")?;
-            // .json::<GetGeminiModelsResponse>()
-            // .await
-            // .context("Failed to parse models response in JSON format")?;
 
             if response.status().as_u16() >= 400 {
                 let text = response.text().await.unwrap_or_default();
@@ -287,7 +280,7 @@ pub mod gemini {
                         .supported_generation_methods
                         .contains(&"generateContent".to_string())
                 })
-                .filter(|model| model.name.starts_with("models/gemini-"))
+                .filter(|model| model.display_name.contains("Gemini"))
                 .map(|model| TextGenerationModel {
                     id: model.name.split("/").last().unwrap_or_default().to_string(),
                     name: model.display_name,
@@ -360,15 +353,8 @@ pub mod gemini {
             cancellation_token: CancellationToken,
         ) -> impl Stream<Item = Result<String>> + '_ {
             let api_key = self.api_key.clone();
-
-            // Kita asumsikan 'HTTP' adalah instance reqwest::Client global atau field dari struct
-            // Jika field struct, sebaiknya clone client-nya:
-            // let client = self.http_client.clone();
-
             async_stream::try_stream! {
-                // 1. Setup Request (Dilakukan di dalam stream agar lazy/async)
-                // Pastikan URL benar, biasanya v1beta bukan v1beta/openai kecuali pakai proxy khusus
-                let request = reqwest::Client::new() // Atau gunakan client global Anda: HTTP
+                let request = reqwest::Client::new()
                     .post("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions")
                     .header("Authorization", format!("Bearer {}", api_key))
                     .json(&openai::ChatCompletionRequest {
@@ -388,39 +374,32 @@ pub mod gemini {
                     .context("Failed to create event source")?;
 
                 loop {
-                    // 2. Gunakan select! HANYA untuk mengambil event/signal
-                    // Kita tidak melakukan yield di dalam sini.
                     let next_step = select! {
                         _ = cancellation_token.cancelled() => {
-                            None // Signal untuk berhenti karena cancel
+                            None
                         }
                         event = es.next() => {
-                            Some(event) // Signal ada data baru (atau error stream)
+                            Some(event)
                         }
                     };
 
-                    // 3. Process hasil select di luar block select
                     match next_step {
-                        // Case: Token Cancelled
                         None => {
                             debug!("Stream cancelled by token");
                             es.close();
                             break;
                         }
 
-                        // Case: Stream selesai (Natural end)
                         Some(None) => {
                             debug!("Stream ended naturally");
                             break;
                         }
 
-                        // Case: Error pada koneksi EventSource
                         Some(Some(Err(e))) => {
                             es.close();
                             Err(anyhow::anyhow!("Stream connection error: {}", e))?;
                         }
 
-                        // Case: Event Berhasil Diterima
                         Some(Some(Ok(event))) => {
                             match event {
                                 Event::Open => {
@@ -434,16 +413,13 @@ pub mod gemini {
 
                                     debug!("Received message data: {}", &message.data);
 
-                                    // Parsing JSON
                                     let chunk = match serde_json::from_str::<openai::ChatCompletionChunk>(&message.data) {
                                         Ok(c) => c,
                                         Err(e) => {
-                                            // debug!("Failed to parse chunk: {}", &message.data);
                                             Err(anyhow::anyhow!("Failed to parse chunk: {}", e))?
                                         }
                                     };
 
-                                    // Yield content delta
                                     for choice in chunk.choices {
                                         if let Some(content) = choice.delta.content {
                                             yield content;

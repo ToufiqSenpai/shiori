@@ -6,4 +6,7 @@
 # will have schema files for capabilities auto-completion
 /gen/schemas
 
+# FFmpeg binaries downloaded during build
+/bin/
+
 /tests/fixtures
