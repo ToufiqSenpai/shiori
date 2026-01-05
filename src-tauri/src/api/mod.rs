@@ -1,5 +1,3 @@
-pub mod hugging_face;
-
 use once_cell::sync::Lazy;
 use reqwest::redirect::Policy as RedirectPolicy;
 use reqwest::Client;

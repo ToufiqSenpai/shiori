@@ -1,16 +1,12 @@
 use super::speech_to_text::SpeechToTextModel;
 use crate::{
-    api::hugging_face::get_repository_files,
-    features::model::text_generation::{
-        Gemini, TextGeneration, TextGenerationModel, TextGenerationProvider,
-    },
-    state::{
-        download::{Checksum, FileDownload},
-        AppState,
-    },
+    api::HTTP, error::ErrorCode, features::model::text_generation::{Model, Provider, gemini::Gemini}, state::{
+        AppState, download::{Checksum, FileDownload}
+    }
 };
-use anyhow::Result;
-use serde::Serialize;
+use anyhow::{Context, Result};
+use serde::{Deserialize, Serialize};
+use strum::IntoEnumIterator;
 use tauri::{AppHandle, Manager};
 
 #[derive(Serialize)]
@@ -19,22 +15,28 @@ pub struct GetSpeechToTextModelResult {
     pub size: u64,
 }
 
-#[tauri::command]
-pub async fn get_speech_to_text_models() -> Result<Vec<GetSpeechToTextModelResult>, String> {
-    let whisper_models = vec![
-        "ggml-tiny-q8_0.bin",
-        "ggml-base-q8_0.bin",
-        "ggml-small-q8_0.bin",
-        "ggml-medium-q8_0.bin",
-        "ggml-large-v3-turbo-q8_0.bin",
-        "ggml-large-v3.bin",
-    ];
+#[derive(Debug, Deserialize)]
+struct RepositoryTree {
+    pub size: u64,
+    pub path: String
+}
 
-    let files = get_repository_files("ggerganov", "whisper.cpp")
+#[tauri::command]
+pub async fn get_speech_to_text_models() -> Result<Vec<GetSpeechToTextModelResult>, ErrorCode> {
+    let stt_filenames = SpeechToTextModel::iter()
+        .map(|model| model.filename())
+        .collect::<Vec<&str>>();
+    
+    let models = HTTP
+        .get("https://huggingface.co/api/models/ggerganov/whisper.cpp/tree/main")
+        .send()
         .await
-        .map_err(|e| format!("Error fetching repository files: {}", e))?
-        .iter()
-        .filter(|file| whisper_models.contains(&file.path.as_str()))
+        .context("Failed to fetch repository files for ggerganov/whisper.cpp")?
+        .json::<Vec<RepositoryTree>>()
+        .await
+        .context("Failed to parse repository files response in JSON format")?
+        .into_iter()
+        .filter(|file| stt_filenames.contains(&file.path.as_str()))
         .map(|file| GetSpeechToTextModelResult {
             model: match file.path.as_str() {
                 "ggml-tiny-q8_0.bin" => SpeechToTextModel::Tiny,
@@ -47,72 +49,45 @@ pub async fn get_speech_to_text_models() -> Result<Vec<GetSpeechToTextModelResul
             },
             size: file.size,
         })
-        .collect();
+        .collect::<Vec<GetSpeechToTextModelResult>>();
 
-    Ok(files)
+    Ok(models)
 }
 
 #[tauri::command]
 pub async fn download_speech_to_text_model(
     app: AppHandle,
     model: SpeechToTextModel,
-) -> Result<(), String> {
-    let (url, checksum) = match model {
-        SpeechToTextModel::Tiny => (
-            "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny-q8_0.bin",
-            "19e8118f6652a650569f5a949d962154e01571d9",
-        ),
-        SpeechToTextModel::Base => (
-            "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base-q8_0.bin",
-            "7bb89bb49ed6955013b166f1b6a6c04584a20fbe",
-        ),
-        SpeechToTextModel::Small => (
-            "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small-q8_0.bin",
-            "bcad8a2083f4e53d648d586b7dbc0cd673d8afad",
-        ),
-        SpeechToTextModel::Medium => (
-            "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-medium-q8_0.bin",
-            "e66645948aff4bebbec71b3485c576f3d63af5d6",
-        ),
-        SpeechToTextModel::LargeTurbo => (
-            "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo-q8_0.bin",
-            "01bf15bedffe9f39d65c1b6ff9b687ea91f59e0e",
-        ),
-        SpeechToTextModel::Large => (
-            "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3.bin",
-            "ad82bf6a9043ceed055076d0fd39f5f186ff8062",
-        ),
-    };
-
+) -> Result<(), ErrorCode> {
     let save_path = app
         .path()
         .app_local_data_dir()
-        .map_err(|e| format!("Failed to get app local data directory: {}", e))?
+        .context("Failed to get app local data directory")?
         .join("models");
 
     app.state::<AppState>()
         .download_manager
         .start(FileDownload::new(
-            url,
+            model.download_url().to_string(),
             save_path,
-            Some(Checksum::Sha1(checksum.to_string())),
+            Some(Checksum::Sha1(model.checksum().to_string())),
         ))
         .await
-        .map_err(|e| format!("Failed to start download: {}", e))?;
+        .context("Failed to start download")?;
 
     Ok(())
 }
 
 #[tauri::command]
 pub async fn set_text_generation_api_key(
-    provider: TextGenerationProvider,
+    provider: Provider,
     api_key: String,
-) -> Result<bool, String> {
+) -> Result<bool, ErrorCode> {
     match provider {
-        TextGenerationProvider::Gemini => {
+        Provider::Gemini => {
             let is_valid = Gemini::set_api_key(api_key)
                 .await
-                .map_err(|e| format!("Error setting Gemini API key: {}", e))?;
+                .context("Error setting Gemini API key")?;
 
             Ok(is_valid)
         }
@@ -120,12 +95,10 @@ pub async fn set_text_generation_api_key(
 }
 
 #[tauri::command]
-pub async fn get_text_generation_models() -> Result<Vec<TextGenerationModel>, String> {
-    let gemini = Gemini::new();
-    let gemini_models = gemini
-        .get_models()
+pub async fn get_text_generation_models() -> Result<Vec<Model>, ErrorCode> {
+    let gemini_models = Gemini::get_models()
         .await
-        .map_err(|e| format!("Error fetching Gemini models: {}", e))?;
+        .context("Error fetching Gemini models")?;
 
     Ok(gemini_models)
 }

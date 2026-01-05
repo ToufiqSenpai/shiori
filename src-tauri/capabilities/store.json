@@ -1,0 +1,9 @@
+{
+  "$schema": "./default.json",
+  "identifier": "store",
+  "description": "Store capabilities for Tauri applications",
+  "windows": ["main"],
+  "permissions": [
+    "store:default"
+  ]
+}

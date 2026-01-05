@@ -34,13 +34,13 @@ pub struct FileDownload {
 }
 
 impl FileDownload {
-    pub fn new(url: &str, save_path: PathBuf, checksum: Option<Checksum>) -> Self {
+    pub fn new(url: String, save_path: PathBuf, checksum: Option<Checksum>) -> Self {
         FileDownload {
             id: Uuid::new_v4().to_string(),
             size: 0,
             progress_bytes: 0,
             speed_bytes: 0,
-            url: url.to_string(),
+            url,
             save_path,
             name: None,
             checksum,

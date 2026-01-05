@@ -5,16 +5,8 @@
   "windows": ["main"],
   "permissions": [
     {
-      "identifier": "fs:allow-read-text-file",
-      "allow": [{ "path": "$APPCONFIG/settings.json" }]
-    },
-    {
-      "identifier": "fs:allow-write-text-file",
-      "allow": [{ "path": "$APPCONFIG/settings.json" }]
-    },
-    {
-      "identifier": "fs:allow-exists",
-      "allow": [{ "path": "$APPCONFIG/settings.json" }]
+      "identifier": "fs:allow-write-file",
+      "allow": [{ "path": "**/*.pdf" }]
     }
   ]
 }

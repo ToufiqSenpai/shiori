@@ -1,2 +1,5 @@
 [alias]
 tauri-dev = "watch -x 'build --lib' -w src"
+
+[env]
+CMAKE_GENERATOR = "Ninja"

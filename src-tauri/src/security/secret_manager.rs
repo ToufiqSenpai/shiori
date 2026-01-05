@@ -22,4 +22,8 @@ impl SecretManager {
     pub fn get(key: &str) -> Result<String, keyring::Error> {
         Self::entry(key)?.get_password()
     }
+
+    pub fn delete(key: &str) -> Result<(), keyring::Error> {
+        Self::entry(key)?.delete_credential()
+    }
 }
