@@ -5,7 +5,7 @@
 A privacy-focused desktop application that transcribes meetings using local Whisper models and generates intelligent summaries with cloud LLMs.
 
 [![Version](https://img.shields.io/badge/version-0.1.0--alpha-blue.svg)](https://github.com/ToufiqSenpai/shiori)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 [![Tauri](https://img.shields.io/badge/Tauri-v2-24C8DB.svg)](https://tauri.app/)
 [![React](https://img.shields.io/badge/React-19-61DAFB.svg)](https://react.dev/)
 
