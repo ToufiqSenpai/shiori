@@ -1,10 +1,3 @@
-use std::env;
-use std::fs;
-use std::fs::create_dir_all;
-use std::io::copy;
-use std::io::Cursor;
-use std::path::PathBuf;
-
 fn main() {
     #[cfg(not(debug_assertions))]
     download_ffmpeg();
@@ -12,7 +5,15 @@ fn main() {
     tauri_build::build()
 }
 
+#[cfg(not(debug_assertions))]
 fn download_ffmpeg() {
+    use std::env;
+    use std::fs;
+    use std::fs::create_dir_all;
+    use std::io::copy;
+    use std::io::Cursor;
+    use std::path::PathBuf;
+
     let bin_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("bin");
     let ffmpeg_path = bin_dir.join("ffmpeg.exe");
 
@@ -42,7 +43,8 @@ fn download_ffmpeg() {
         if file.name().ends_with("ffmpeg.exe") {
             println!("cargo:warning=Extracting ffmpeg.exe...");
 
-            let mut out_file = fs::File::create(&ffmpeg_path).expect("Failed to create output file");
+            let mut out_file =
+                fs::File::create(&ffmpeg_path).expect("Failed to create output file");
             copy(&mut file, &mut out_file).expect("Failed to copy ffmpeg.exe");
 
             break;
